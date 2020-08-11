@@ -1,6 +1,8 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import VideoEditor from './components/VideoEditor';
+import ScrollTop from './components/ScrollTop';
 
 function App() {
   return (
@@ -10,15 +12,12 @@ function App() {
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
+        <a className="App-link" href="#video-section" rel="noopener noreferrer">
+          Video Editor
         </a>
       </header>
+      <VideoEditor />
+      <ScrollTop />
     </div>
   );
 }
