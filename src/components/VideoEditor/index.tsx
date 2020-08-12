@@ -16,6 +16,9 @@ type Progress = {
   ratio: number;
 };
 
+const calculateSecondFromRange = (duration: number) => (rangeValue: number) =>
+  duration * (rangeValue / 100);
+
 const convertToTimeString = (seccond: number) =>
   new Date(seccond * 1000).toISOString().substr(11, 8);
 
@@ -32,6 +35,7 @@ function VideoEditor() {
     progress: (progress: Progress) =>
       console.log('Progress now is: ', progress.ratio),
   });
+  const secondCalculator = calculateSecondFromRange(duration);
   const doTrim = async () => {
     try {
       if (!file) return;
@@ -47,8 +51,8 @@ function VideoEditor() {
       await ffmpeg.trim(
         inputFileName,
         outputFileName,
-        '00:00:00',
-        '00:00:10',
+        convertToTimeString(secondCalculator(range[0])),
+        convertToTimeString(secondCalculator(range[1])),
         '-c copy',
       );
 
@@ -83,22 +87,27 @@ function VideoEditor() {
 
   const handleChangeRange = useCallback(
     (_: React.ChangeEvent<{}>, value: number | number[]) => {
-      setRange(value as number[]);
+      if (Array.isArray(value)) {
+        if (videoRef.current) {
+          const start = secondCalculator(value[0]);
+          const end = secondCalculator(value[1]);
+          if (value[0] !== range[0]) {
+            videoRef.current.currentTime = start;
+          }
+          videoRef.current.src = `${videoSrc}#t=${convertToTimeString(
+            start,
+          )},${convertToTimeString(end)}`;
+        }
+
+        setRange(value);
+      }
     },
-    [],
+    [range, secondCalculator, videoRef, videoSrc],
   );
 
   const hanldeLoadMetaData = useCallback(() => {
     setDuration(videoRef.current?.duration ?? 0);
   }, [videoRef]);
-
-  const handleChangeInputRange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name } = e.target;
-      console.log(name);
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!file) {
@@ -115,6 +124,8 @@ function VideoEditor() {
       <br />
       <p />
       <video
+        autoPlay
+        loop
         muted
         controls
         src={videoSrc}
@@ -137,16 +148,10 @@ function VideoEditor() {
         aria-labelledby="range-slider"
       />
       <br />
-      <input
-        name="timeStart"
-        value={convertToTimeString(duration * (range[0] / 100))}
-        onChange={handleChangeInputRange}
-      />
-      <input
-        name="timeEnd"
-        value={convertToTimeString(duration * (range[1] / 100))}
-        onChange={handleChangeInputRange}
-      />
+      <span>{convertToTimeString(secondCalculator(range[0]))}</span>
+      {' - '}
+      <span>{convertToTimeString(secondCalculator(range[1]))}</span>
+      <p />
       <button onClick={doTrim}>Start</button>
       <p>{message}</p>
 
