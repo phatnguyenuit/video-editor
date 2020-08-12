@@ -70,6 +70,7 @@ function VideoEditor() {
         url: outputUrl,
       });
       setVideoSrc(outputUrl);
+      setRange([0, 100]);
     } catch (error) {
       console.error(error);
     }
@@ -114,13 +115,16 @@ function VideoEditor() {
       return;
     }
 
+    setMessage('Click Start to trim');
     setVideoSrc(window.URL.createObjectURL(file));
+    setOutput(undefined);
+    setRange([0, 100]);
   }, [file]);
 
   return (
     <div id="video-section" className={classes.root}>
       <p />
-      <input type="file" onChange={handleChangeFile} />
+      <input type="file" accept="video/mp4" onChange={handleChangeFile} />
       <br />
       <p />
       <video
