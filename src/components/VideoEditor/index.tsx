@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react';
 import { createFFmpeg } from '@ffmpeg/ffmpeg';
-
 import { Slider } from '@material-ui/core';
 
 import classes from './styles.module.css';
@@ -16,6 +15,9 @@ type OutputFile = {
 type Progress = {
   ratio: number;
 };
+
+const convertToTimeString = (seccond: number) =>
+  new Date(seccond * 1000).toISOString().substr(11, 8);
 
 function VideoEditor() {
   const videoRef = createRef<HTMLVideoElement>();
@@ -90,6 +92,14 @@ function VideoEditor() {
     setDuration(videoRef.current?.duration ?? 0);
   }, [videoRef]);
 
+  const handleChangeInputRange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name } = e.target;
+      console.log(name);
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!file) {
       return;
@@ -115,21 +125,28 @@ function VideoEditor() {
         onLoadedMetadata={hanldeLoadMetaData}
       ></video>
       <br />
-      {/* <input
-        type="range"
-        min={0}
-        max={videoRef.current?.duration}
-        style={{ width: 600 }}
-      /> */}
       <Slider
+        classes={{
+          root: classes.sliderRoot,
+        }}
+        disabled={duration === 0}
+        step={0.1}
         value={range}
         onChange={handleChangeRange}
-        valueLabelDisplay="auto"
+        valueLabelDisplay="off"
         aria-labelledby="range-slider"
-        getAriaValueText={(value: number) => `${duration * (value / 100)}`}
-        valueLabelFormat={(value: number) => `${duration * (value / 100)}`}
       />
       <br />
+      <input
+        name="timeStart"
+        value={convertToTimeString(duration * (range[0] / 100))}
+        onChange={handleChangeInputRange}
+      />
+      <input
+        name="timeEnd"
+        value={convertToTimeString(duration * (range[1] / 100))}
+        onChange={handleChangeInputRange}
+      />
       <button onClick={doTrim}>Start</button>
       <p>{message}</p>
 
