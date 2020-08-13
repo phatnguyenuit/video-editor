@@ -24,6 +24,12 @@ const calculateSecondFromRange = (duration: number) => (rangeValue: number) =>
 const convertToTimeString = (seccond: number) =>
   new Date(seccond * 1000).toISOString().substr(11, 8);
 
+const ffmpeg = createFFmpeg({
+  log: true,
+  progress: (progress: Progress) =>
+    console.log('Progress now is: ', progress.ratio),
+});
+
 function VideoEditor() {
   const videoRef = createRef<HTMLVideoElement>();
   const [file, setFile] = useState<UploadFile>();
@@ -32,11 +38,7 @@ function VideoEditor() {
   const [message, setMessage] = useState('Click Start to trim');
   const [duration, setDuration] = useState(0);
   const [range, setRange] = useState<number[]>([0, 100]);
-  const ffmpeg = createFFmpeg({
-    log: true,
-    progress: (progress: Progress) =>
-      console.log('Progress now is: ', progress.ratio),
-  });
+
   const secondCalculator = calculateSecondFromRange(duration);
   const doTrim = async () => {
     try {
@@ -86,32 +88,27 @@ function VideoEditor() {
     [],
   );
 
-  const updateVideoTime = useCallback(
-    (videoDom: HTMLVideoElement | null, value: number[]) => {
-      if (videoDom) {
-        const start = secondCalculator(value[0]);
-        const end = secondCalculator(value[1]);
-        if (value[0] !== range[0]) {
-          videoDom.currentTime = start;
-        }
-        videoDom.src = `${videoSrc}#t=${convertToTimeString(
-          start,
-        )},${convertToTimeString(end)}`;
+  const updateVideoTime = useDebounceCallback((value: number[]) => {
+    if (videoRef.current) {
+      const start = secondCalculator(value[0]);
+      const end = secondCalculator(value[1]);
+      if (value[0] !== range[0]) {
+        videoRef.current.currentTime = start;
       }
-    },
-    [range, secondCalculator, videoSrc],
-  );
-
-  const updateVideoTimeDebounce = useDebounceCallback(updateVideoTime, 500);
+      videoRef.current.src = `${videoSrc}#t=${convertToTimeString(
+        start,
+      )},${convertToTimeString(end)}`;
+    }
+  }, 500);
 
   const handleChangeRange = useCallback(
     (_: React.ChangeEvent<{}>, value: number | number[]) => {
       if (Array.isArray(value)) {
         setRange(value);
-        updateVideoTimeDebounce(videoRef.current, value);
+        updateVideoTime(value);
       }
     },
-    [updateVideoTimeDebounce, videoRef],
+    [updateVideoTime],
   );
 
   const hanldeLoadMetaData = useCallback(() => {

@@ -1,14 +1,15 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 export default function useDebounceCallback(callback, delay, immediate) {
   const timer = useRef(null);
+  const debouncedCallback = useRef();
 
-  const debouncedCallback = useCallback(
+  const enhancedCallback = useCallback(
     (...args) => {
       const later = () => {
         timer.current = null;
         if (!immediate) {
-          callback.apply(null, args);
+          debouncedCallback.current.apply(null, args);
         }
       };
 
@@ -18,11 +19,15 @@ export default function useDebounceCallback(callback, delay, immediate) {
       timer.current = setTimeout(later, delay);
 
       if (callNow) {
-        callback.apply(null, args);
+        debouncedCallback.current.apply(null, args);
       }
     },
-    [callback, delay, immediate],
+    [delay, immediate],
   );
 
-  return debouncedCallback;
+  useEffect(() => {
+    debouncedCallback.current = callback;
+  }, [callback]);
+
+  return enhancedCallback;
 }
