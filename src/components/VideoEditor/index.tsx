@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, createRef } from 'react';
 import { createFFmpeg } from '@ffmpeg/ffmpeg';
 import { Slider } from '@material-ui/core';
 
+import useDebounceCallback from '../../hooks/useDebounceCallback';
+
 import classes from './styles.module.css';
 
 type UploadFile = File | null | undefined;
@@ -78,32 +80,38 @@ function VideoEditor() {
 
   const handleChangeFile = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target?.files?.item(0);
-
-      console.log(file?.type);
+      const file = e.target?.files?.[0];
       setFile(file);
     },
     [],
   );
 
+  const updateVideoTime = useCallback(
+    (videoDom: HTMLVideoElement | null, value: number[]) => {
+      if (videoDom) {
+        const start = secondCalculator(value[0]);
+        const end = secondCalculator(value[1]);
+        if (value[0] !== range[0]) {
+          videoDom.currentTime = start;
+        }
+        videoDom.src = `${videoSrc}#t=${convertToTimeString(
+          start,
+        )},${convertToTimeString(end)}`;
+      }
+    },
+    [range, secondCalculator, videoSrc],
+  );
+
+  const updateVideoTimeDebounce = useDebounceCallback(updateVideoTime, 500);
+
   const handleChangeRange = useCallback(
     (_: React.ChangeEvent<{}>, value: number | number[]) => {
       if (Array.isArray(value)) {
-        if (videoRef.current) {
-          const start = secondCalculator(value[0]);
-          const end = secondCalculator(value[1]);
-          if (value[0] !== range[0]) {
-            videoRef.current.currentTime = start;
-          }
-          videoRef.current.src = `${videoSrc}#t=${convertToTimeString(
-            start,
-          )},${convertToTimeString(end)}`;
-        }
-
         setRange(value);
+        updateVideoTimeDebounce(videoRef.current, value);
       }
     },
-    [range, secondCalculator, videoRef, videoSrc],
+    [updateVideoTimeDebounce, videoRef],
   );
 
   const hanldeLoadMetaData = useCallback(() => {
