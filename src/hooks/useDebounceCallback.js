@@ -1,6 +1,16 @@
 import { useRef, useCallback, useEffect } from 'react';
 
-export default function useDebounceCallback(callback, delay, immediate) {
+/**
+ * Use debounce callback
+ * @param {Function} callback Callback
+ * @param {number} delay delay time to execute callback
+ * @param {boolean} immediate Run callback immediate on the first time
+ */
+export default function useDebounceCallback(
+  callback,
+  delay,
+  immediate = false,
+) {
   const timer = useRef(null);
   const debouncedCallback = useRef();
 

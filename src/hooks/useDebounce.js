@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 
 // Reference: https://dev.to/gabe_ragland/debouncing-with-react-hooks-jci
+
+/**
+ * Use debounce hook for value
+ * @param {any} value Value
+ * @param {number} delay delay time
+ */
 export default function useDebounce(value, delay) {
   // State and setters for debounced value
   const [debouncedValue, setDebouncedValue] = useState(value);
